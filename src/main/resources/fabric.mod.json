@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "nukealert",
+  "version": "${version}",
+  "name": "Nuke Alert",
+  "description": "Client-side Nuke, Clone, and Accumulate cooldown alerts with separate custom sounds.",
+  "authors": ["Tab Timer Notifier"],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.example.tabtimernotifier.TabTimerNotifierClient"
+    ]
+  },
+  "mixins": [
+    "nukealert.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "=1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

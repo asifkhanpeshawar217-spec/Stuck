@@ -1,0 +1,12 @@
+NEW REPOSITORY SETUP
+
+1. Create a new EMPTY repository on GitHub.
+2. Extract this ZIP.
+3. Open the extracted NukeAlert-Fabric-Mod folder.
+4. Upload all the items INSIDE that folder to the root of the new repository.
+5. Include the hidden .github folder and its workflows/build.yml file.
+6. Commit the upload to the main branch.
+7. Open Actions and wait for Build Fabric mod.
+8. Download the nuke-alert artifact from a successful run.
+
+Do not upload the ZIP file itself. Upload its extracted contents.

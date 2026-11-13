@@ -1,0 +1,8 @@
+NUKE ALERT — FRESH FABRIC PROJECT
+
+This is the renamed fresh project. Create a NEW empty GitHub repository, extract this ZIP, then upload all contents inside the NukeAlert-Fabric-Mod folder to the repository root. Include the hidden .github folder.
+
+Run the Build Fabric mod workflow from the Actions tab. Download the nuke-alert artifact only after the workflow succeeds.
+
+Minecraft: 1.21.11 | Java: 21 | Fabric Loader: 0.20.1
+Open the settings screen with Right Shift + N.
