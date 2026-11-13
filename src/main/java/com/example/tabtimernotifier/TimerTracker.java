@@ -23,7 +23,8 @@ public final class TimerTracker {
 
     public static void onFooterReceived(String footer) {
         if (footer == null || footer.isBlank()) return;
-        String normalized = footer.replace('\\r', '\\n');
+        String normalized = footer.replace('\r', '\n');
+    
         updateFromLine(normalized, NUKE_LINE, NUKE);
         updateFromLine(normalized, CLONE_LINE, CLONE);
         updateFromLine(normalized, ACCUMULATE_LINE, ACCUMULATE);
