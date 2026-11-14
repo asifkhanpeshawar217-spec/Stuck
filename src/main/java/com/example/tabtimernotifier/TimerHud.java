@@ -8,22 +8,21 @@ import org.lwjgl.glfw.GLFW;
 
 public final class TimerHud {
 
-    private static boolean editMode = false;
-    private static boolean dragging = false;
-    private static boolean resizing = false;
+    private static boolean editMode;
+    private static boolean dragging;
+    private static boolean resizing;
+    private static boolean wasLeftMouseDown;
 
     private static double dragOffsetX;
     private static double dragOffsetY;
-
     private static double resizeStartX;
     private static double resizeStartY;
 
     private static int originalWidth;
     private static int originalHeight;
 
-    private static boolean wasLeftMouseDown = false;
-
-    private static final int PADDING = 8;
+    private static final int BASE_WIDTH = 130;
+    private static final int BASE_HEIGHT = 100;
 
     private static final int NUKE_COLOR = 0xFFFF6262;
     private static final int CLONE_COLOR = 0xFFB69AFF;
@@ -63,8 +62,27 @@ public final class TimerHud {
         int width = NotifierSettings.hudWidth;
         int height = NotifierSettings.hudHeight;
 
-        int alpha = Math.round(NotifierSettings.hudOpacity * 255);
-        alpha = clamp(alpha, 0, 255);
+        width = clamp(width, 80, 500);
+        height = clamp(height, 55, 400);
+
+        float widthRatio = (float) width / BASE_WIDTH;
+        float heightRatio = (float) height / BASE_HEIGHT;
+
+        // Uniform scaling prevents text from becoming stretched.
+        float resizeScale = (float) Math.sqrt(
+                widthRatio * heightRatio
+        );
+
+        float textScale = resizeScale
+                * NotifierSettings.hudTextSize;
+
+        int padding = Math.max(3, Math.round(8 * resizeScale));
+
+        int alpha = clamp(
+                Math.round(NotifierSettings.hudOpacity * 255),
+                0,
+                255
+        );
 
         int background = (alpha << 24) | 0x00101018;
 
@@ -77,12 +95,24 @@ public final class TimerHud {
         );
 
         if (editMode) {
-            int borderColor = 0xFFFFFFFF;
+            int border = 0xFFFFFFFF;
 
-            context.fill(x, y, x + width, y + 1, borderColor);
-            context.fill(x, y + height - 1, x + width, y + height, borderColor);
-            context.fill(x, y, x + 1, y + height, borderColor);
-            context.fill(x + width - 1, y, x + width, y + height, borderColor);
+            context.fill(x, y, x + width, y + 1, border);
+            context.fill(
+                    x,
+                    y + height - 1,
+                    x + width,
+                    y + height,
+                    border
+            );
+            context.fill(x, y, x + 1, y + height, border);
+            context.fill(
+                    x + width - 1,
+                    y,
+                    x + width,
+                    y + height,
+                    border
+            );
 
             context.drawTextWithShadow(
                     client.textRenderer,
@@ -92,17 +122,18 @@ public final class TimerHud {
                     0xFFFFFFFF
             );
 
+            // Resize handle.
             context.fill(
-                    x + width - 8,
-                    y + height - 8,
+                    x + width - 9,
+                    y + height - 9,
                     x + width,
                     y + height,
                     0xFFFFFFFF
             );
         }
 
-        int textX = x + PADDING;
-        int textY = y + PADDING;
+        int textX = x + padding;
+        int textY = y + padding;
 
         if (showNuke) {
             drawTimer(
@@ -113,10 +144,13 @@ public final class TimerHud {
                     TimerTracker.isNukeActive(),
                     TimerTracker.getNukeRemainingSeconds(),
                     textX,
-                    textY
+                    textY,
+                    textScale
             );
 
-            textY += 35 + NotifierSettings.hudSpacing;
+            textY += Math.round(
+                    (35 + NotifierSettings.hudSpacing) * resizeScale
+            );
         }
 
         if (showClone) {
@@ -128,7 +162,8 @@ public final class TimerHud {
                     TimerTracker.isCloneActive(),
                     TimerTracker.getCloneRemainingSeconds(),
                     textX,
-                    textY
+                    textY,
+                    textScale
             );
         }
 
@@ -145,10 +180,9 @@ public final class TimerHud {
             boolean active,
             long seconds,
             int x,
-            int y
+            int y,
+            float scale
     ) {
-        float scale = NotifierSettings.hudTextSize;
-
         context.getMatrices().pushMatrix();
 
         context.getMatrices().translate((float) x, (float) y);
@@ -162,7 +196,9 @@ public final class TimerHud {
                 color
         );
 
-        String timer = active ? formatTime(seconds) : "READY";
+        String timer = active
+                ? formatTime(seconds)
+                : "READY";
 
         context.drawTextWithShadow(
                 client.textRenderer,
@@ -202,9 +238,11 @@ public final class TimerHud {
         boolean released = !mouseDown && wasLeftMouseDown;
 
         if (justPressed) {
-            if (mouseX >= x + width - 12
+
+            // Bottom-right corner resizes the HUD.
+            if (mouseX >= x + width - 14
                     && mouseX <= x + width
-                    && mouseY >= y + height - 12
+                    && mouseY >= y + height - 14
                     && mouseY <= y + height) {
 
                 resizing = true;
@@ -228,8 +266,11 @@ public final class TimerHud {
         }
 
         if (mouseDown && dragging) {
-            NotifierSettings.hudX = (int) (mouseX - dragOffsetX);
-            NotifierSettings.hudY = (int) (mouseY - dragOffsetY);
+            NotifierSettings.hudX =
+                    (int) (mouseX - dragOffsetX);
+
+            NotifierSettings.hudY =
+                    (int) (mouseY - dragOffsetY);
         }
 
         if (mouseDown && resizing) {
