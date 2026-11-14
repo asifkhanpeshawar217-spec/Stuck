@@ -43,8 +43,10 @@ public final class TimerTracker {
     }
 
     private static void updateFromLine(
-            String footer, Pattern linePattern, Cooldown cooldown) {
-
+            String footer,
+            Pattern linePattern,
+            Cooldown cooldown
+    ) {
         Matcher lineMatcher = linePattern.matcher(footer);
 
         if (!lineMatcher.find()) return;
@@ -77,6 +79,38 @@ public final class TimerTracker {
         ACCUMULATE.tick(now, client);
     }
 
+    // ==========================================
+    // HUD ACCESS METHODS
+    // ==========================================
+
+    public static boolean hasNukeData() {
+        return NUKE.isInitialized();
+    }
+
+    public static boolean hasCloneData() {
+        return CLONE.isInitialized();
+    }
+
+    public static boolean isNukeActive() {
+        return NUKE.isActive();
+    }
+
+    public static boolean isCloneActive() {
+        return CLONE.isActive();
+    }
+
+    public static long getNukeRemainingSeconds() {
+        return NUKE.getRemainingSeconds();
+    }
+
+    public static long getCloneRemainingSeconds() {
+        return CLONE.getRemainingSeconds();
+    }
+
+    // ==========================================
+    // COOLDOWN SYSTEM
+    // ==========================================
+
     private static final class Cooldown {
 
         private final String name;
@@ -89,6 +123,24 @@ public final class TimerTracker {
 
         private Cooldown(String name) {
             this.name = name;
+        }
+
+        private boolean isInitialized() {
+            return initialized;
+        }
+
+        private boolean isActive() {
+            return active;
+        }
+
+        private long getRemainingSeconds() {
+            if (!active) return 0L;
+
+            long remaining = readyAtNanos - System.nanoTime();
+
+            if (remaining <= 0L) return 0L;
+
+            return (remaining + 999_999_999L) / 1_000_000_000L;
         }
 
         private void updateTimer(long seconds) {
