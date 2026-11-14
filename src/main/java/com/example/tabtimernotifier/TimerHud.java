@@ -4,17 +4,16 @@ package com.example.tabtimernotifier;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import org.lwjgl.glfw.GLFW;
 
 public final class TimerHud {
 
     private static boolean editMode;
     private static boolean dragging;
     private static boolean resizing;
-    private static boolean wasLeftMouseDown;
 
     private static double dragOffsetX;
     private static double dragOffsetY;
+
     private static double resizeStartX;
     private static double resizeStartY;
 
@@ -31,11 +30,11 @@ public final class TimerHud {
     private TimerHud() {}
 
     public static void setEditMode(boolean enabled) {
-        if (editMode != enabled) {
-            editMode = enabled;
+        editMode = enabled;
+
+        if (!enabled) {
             dragging = false;
             resizing = false;
-            wasLeftMouseDown = false;
         }
     }
 
@@ -59,16 +58,14 @@ public final class TimerHud {
 
         int x = NotifierSettings.hudX;
         int y = NotifierSettings.hudY;
-        int width = NotifierSettings.hudWidth;
-        int height = NotifierSettings.hudHeight;
 
-        width = clamp(width, 80, 500);
-        height = clamp(height, 55, 400);
+        int width = clamp(NotifierSettings.hudWidth, 80, 500);
+        int height = clamp(NotifierSettings.hudHeight, 55, 400);
 
         float widthRatio = (float) width / BASE_WIDTH;
         float heightRatio = (float) height / BASE_HEIGHT;
 
-        // Uniform scaling prevents text from becoming stretched.
+        // Uniform scaling keeps the text proportions natural.
         float resizeScale = (float) Math.sqrt(
                 widthRatio * heightRatio
         );
@@ -76,7 +73,10 @@ public final class TimerHud {
         float textScale = resizeScale
                 * NotifierSettings.hudTextSize;
 
-        int padding = Math.max(3, Math.round(8 * resizeScale));
+        int padding = Math.max(
+                3,
+                Math.round(8 * resizeScale)
+        );
 
         int alpha = clamp(
                 Math.round(NotifierSettings.hudOpacity * 255),
@@ -95,37 +95,11 @@ public final class TimerHud {
         );
 
         if (editMode) {
-            int border = 0xFFFFFFFF;
+            drawBorder(context, x, y, width, height);
 
-            context.fill(x, y, x + width, y + 1, border);
             context.fill(
-                    x,
-                    y + height - 1,
-                    x + width,
-                    y + height,
-                    border
-            );
-            context.fill(x, y, x + 1, y + height, border);
-            context.fill(
-                    x + width - 1,
-                    y,
-                    x + width,
-                    y + height,
-                    border
-            );
-
-            context.drawTextWithShadow(
-                    client.textRenderer,
-                    Text.literal("HUD EDIT MODE"),
-                    x + 5,
-                    y - 12,
-                    0xFFFFFFFF
-            );
-
-            // Resize handle.
-            context.fill(
-                    x + width - 9,
-                    y + height - 9,
+                    x + width - 10,
+                    y + height - 10,
                     x + width,
                     y + height,
                     0xFFFFFFFF
@@ -135,7 +109,7 @@ public final class TimerHud {
         int textX = x + padding;
         int textY = y + padding;
 
-        if (showNuke) {
+        if (showNuke || editMode && NotifierSettings.hudShowNuke) {
             drawTimer(
                     context,
                     client,
@@ -153,7 +127,7 @@ public final class TimerHud {
             );
         }
 
-        if (showClone) {
+        if (showClone || editMode && NotifierSettings.hudShowClone) {
             drawTimer(
                     context,
                     client,
@@ -166,10 +140,33 @@ public final class TimerHud {
                     textScale
             );
         }
+    }
 
-        if (editMode) {
-            handleMouse(client, x, y, width, height);
-        }
+    private static void drawBorder(
+            DrawContext context,
+            int x,
+            int y,
+            int width,
+            int height
+    ) {
+        int color = 0xFFFFFFFF;
+
+        context.fill(x, y, x + width, y + 1, color);
+        context.fill(
+                x,
+                y + height - 1,
+                x + width,
+                y + height,
+                color
+        );
+        context.fill(x, y, x + 1, y + height, color);
+        context.fill(
+                x + width - 1,
+                y,
+                x + width,
+                y + height,
+                color
+        );
     }
 
     private static void drawTimer(
@@ -211,69 +208,73 @@ public final class TimerHud {
         context.getMatrices().popMatrix();
     }
 
-    private static void handleMouse(
-            MinecraftClient client,
-            int x,
-            int y,
-            int width,
-            int height
+    public static boolean mouseClicked(
+            double mouseX,
+            double mouseY,
+            int button
     ) {
-        long window = client.getWindow().getHandle();
+        if (!editMode || button != 0) return false;
 
-        double mouseX = client.mouse.getX()
-                * client.getWindow().getScaledWidth()
-                / client.getWindow().getWidth();
+        int x = NotifierSettings.hudX;
+        int y = NotifierSettings.hudY;
 
-        double mouseY = client.mouse.getY()
-                * client.getWindow().getScaledHeight()
-                / client.getWindow().getHeight();
+        int width = clamp(NotifierSettings.hudWidth, 80, 500);
+        int height = clamp(NotifierSettings.hudHeight, 55, 400);
 
-        boolean mouseDown =
-                GLFW.glfwGetMouseButton(
-                        window,
-                        GLFW.GLFW_MOUSE_BUTTON_LEFT
-                ) == GLFW.GLFW_PRESS;
+        // Bottom-right handle starts resizing.
+        if (mouseX >= x + width - 14
+                && mouseX <= x + width
+                && mouseY >= y + height - 14
+                && mouseY <= y + height) {
 
-        boolean justPressed = mouseDown && !wasLeftMouseDown;
-        boolean released = !mouseDown && wasLeftMouseDown;
+            resizing = true;
+            dragging = false;
 
-        if (justPressed) {
+            resizeStartX = mouseX;
+            resizeStartY = mouseY;
 
-            // Bottom-right corner resizes the HUD.
-            if (mouseX >= x + width - 14
-                    && mouseX <= x + width
-                    && mouseY >= y + height - 14
-                    && mouseY <= y + height) {
+            originalWidth = width;
+            originalHeight = height;
 
-                resizing = true;
-                dragging = false;
-
-                resizeStartX = mouseX;
-                resizeStartY = mouseY;
-
-                originalWidth = width;
-                originalHeight = height;
-
-            } else if (mouseX >= x && mouseX <= x + width
-                    && mouseY >= y && mouseY <= y + height) {
-
-                dragging = true;
-                resizing = false;
-
-                dragOffsetX = mouseX - x;
-                dragOffsetY = mouseY - y;
-            }
+            return true;
         }
 
-        if (mouseDown && dragging) {
+        // Clicking anywhere else inside the HUD starts dragging.
+        if (mouseX >= x && mouseX <= x + width
+                && mouseY >= y && mouseY <= y + height) {
+
+            dragging = true;
+            resizing = false;
+
+            dragOffsetX = mouseX - x;
+            dragOffsetY = mouseY - y;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public static boolean mouseDragged(
+            double mouseX,
+            double mouseY,
+            int button,
+            double deltaX,
+            double deltaY
+    ) {
+        if (!editMode || button != 0) return false;
+
+        if (dragging) {
             NotifierSettings.hudX =
                     (int) (mouseX - dragOffsetX);
 
             NotifierSettings.hudY =
                     (int) (mouseY - dragOffsetY);
+
+            return true;
         }
 
-        if (mouseDown && resizing) {
+        if (resizing) {
             NotifierSettings.hudWidth = clamp(
                     (int) (originalWidth + mouseX - resizeStartX),
                     80,
@@ -285,18 +286,31 @@ public final class TimerHud {
                     55,
                     400
             );
+
+            return true;
         }
 
-        if (released) {
-            if (dragging || resizing) {
-                NotifierSettings.save();
-            }
+        return false;
+    }
 
+    public static boolean mouseReleased(
+            double mouseX,
+            double mouseY,
+            int button
+    ) {
+        if (button != 0) return false;
+
+        boolean wasEditing = dragging || resizing;
+
+        if (wasEditing) {
             dragging = false;
             resizing = false;
+
+            NotifierSettings.save();
+            return true;
         }
 
-        wasLeftMouseDown = mouseDown;
+        return false;
     }
 
     private static int clamp(int value, int min, int max) {

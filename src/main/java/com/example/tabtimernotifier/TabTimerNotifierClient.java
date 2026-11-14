@@ -4,7 +4,6 @@ package com.example.tabtimernotifier;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
@@ -12,9 +11,7 @@ import org.lwjgl.glfw.GLFW;
 public final class TabTimerNotifierClient implements ClientModInitializer {
 
     private static KeyBinding openSettings;
-
-    private static boolean previousRightShift;
-    private static boolean hudEditMode;
+    private static KeyBinding editHud;
 
     @Override
     public void onInitializeClient() {
@@ -23,6 +20,15 @@ public final class TabTimerNotifierClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(
                 TimerTracker::onClientTick
+        );
+
+        editHud = KeyBindingHelper.registerKeyBinding(
+                new KeyBinding(
+                        "key.nukealert.edit_hud",
+                        InputUtil.Type.KEYSYM,
+                        GLFW.GLFW_KEY_RIGHT_SHIFT,
+                        KeyBinding.Category.MISC
+                )
         );
 
         openSettings = KeyBindingHelper.registerKeyBinding(
@@ -40,59 +46,30 @@ public final class TabTimerNotifierClient implements ClientModInitializer {
 
             long window = client.getWindow().getHandle();
 
-            boolean rightShift =
+            boolean rightShiftDown =
                     GLFW.glfwGetKey(
                             window,
                             GLFW.GLFW_KEY_RIGHT_SHIFT
                     ) == GLFW.GLFW_PRESS;
 
-            boolean nPressed =
-                    GLFW.glfwGetKey(
-                            window,
-                            GLFW.GLFW_KEY_N
-                    ) == GLFW.GLFW_PRESS;
-
-            // Right Shift + N opens the existing settings screen.
             while (openSettings.wasPressed()) {
-
-                if (rightShift && client.currentScreen == null) {
-
-                    hudEditMode = false;
-                    TimerHud.setEditMode(false);
-
+                if (rightShiftDown && client.currentScreen == null) {
                     client.setScreen(
                             new SoundSettingsScreen(null)
                     );
+                    return;
                 }
             }
 
-            // Right Shift alone toggles HUD editing.
-            if (rightShift
-                    && !previousRightShift
-                    && !nPressed
-                    && client.currentScreen == null
-                    && client.player != null) {
+            while (editHud.wasPressed()) {
+                if (client.currentScreen == null
+                        && client.player != null) {
 
-                hudEditMode = !hudEditMode;
-
-                TimerHud.setEditMode(hudEditMode);
-
-                if (hudEditMode) {
-                    // Release Minecraft's captured mouse.
-                    client.mouse.unlockCursor();
-                } else {
-                    // Return mouse control to Minecraft.
-                    client.mouse.lockCursor();
+                    client.setScreen(
+                            new HudEditorScreen(null)
+                    );
                 }
             }
-
-            // If another screen opens, stop editing.
-            if (client.currentScreen != null && hudEditMode) {
-                hudEditMode = false;
-                TimerHud.setEditMode(false);
-            }
-
-            previousRightShift = rightShift;
         });
     }
 }
