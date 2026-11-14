@@ -1,10 +1,10 @@
 
 package com.example.tabtimernotifier;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.input.MouseInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -57,7 +57,7 @@ public final class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(MouseInput click, boolean doubleClick) {
+    public boolean mouseClicked(Click click, boolean doubleClick) {
         if (TimerHud.mouseClicked(
                 click.x(),
                 click.y(),
@@ -71,7 +71,7 @@ public final class HudEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(
-            MouseInput click,
+            Click click,
             double deltaX,
             double deltaY
     ) {
@@ -89,7 +89,7 @@ public final class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(MouseInput click) {
+    public boolean mouseReleased(Click click) {
         if (TimerHud.mouseReleased(
                 click.x(),
                 click.y(),
