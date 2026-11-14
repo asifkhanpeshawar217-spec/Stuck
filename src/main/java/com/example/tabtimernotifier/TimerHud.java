@@ -36,6 +36,7 @@ public final class TimerHud {
             editMode = enabled;
             dragging = false;
             resizing = false;
+            wasLeftMouseDown = false;
         }
     }
 
@@ -59,20 +60,29 @@ public final class TimerHud {
 
         int x = NotifierSettings.hudX;
         int y = NotifierSettings.hudY;
-
         int width = NotifierSettings.hudWidth;
         int height = NotifierSettings.hudHeight;
 
         int alpha = Math.round(NotifierSettings.hudOpacity * 255);
+        alpha = clamp(alpha, 0, 255);
+
         int background = (alpha << 24) | 0x00101018;
 
-        context.fill(x, y, x + width, y + height, background);
+        context.fill(
+                x,
+                y,
+                x + width,
+                y + height,
+                background
+        );
 
         if (editMode) {
-            context.drawBorder(
-                    x, y, width, height,
-                    0xFFFFFFFF
-            );
+            int borderColor = 0xFFFFFFFF;
+
+            context.fill(x, y, x + width, y + 1, borderColor);
+            context.fill(x, y + height - 1, x + width, y + height, borderColor);
+            context.fill(x, y, x + 1, y + height, borderColor);
+            context.fill(x + width - 1, y, x + width, y + height, borderColor);
 
             context.drawTextWithShadow(
                     client.textRenderer,
@@ -137,11 +147,12 @@ public final class TimerHud {
             int x,
             int y
     ) {
-        context.getMatrices().push();
-
         float scale = NotifierSettings.hudTextSize;
-        context.getMatrices().translate(x, y, 0);
-        context.getMatrices().scale(scale, scale, 1);
+
+        context.getMatrices().pushMatrix();
+
+        context.getMatrices().translate((float) x, (float) y);
+        context.getMatrices().scale(scale, scale);
 
         context.drawTextWithShadow(
                 client.textRenderer,
@@ -161,7 +172,7 @@ public final class TimerHud {
                 TIMER_COLOR
         );
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     private static void handleMouse(
@@ -182,8 +193,10 @@ public final class TimerHud {
                 / client.getWindow().getHeight();
 
         boolean mouseDown =
-                GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_LEFT)
-                        == GLFW.GLFW_PRESS;
+                GLFW.glfwGetMouseButton(
+                        window,
+                        GLFW.GLFW_MOUSE_BUTTON_LEFT
+                ) == GLFW.GLFW_PRESS;
 
         boolean justPressed = mouseDown && !wasLeftMouseDown;
         boolean released = !mouseDown && wasLeftMouseDown;
