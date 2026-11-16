@@ -21,6 +21,7 @@ It reads the server's player-list footer, tracks cooldowns locally, and plays no
 - In-game sound selector, preview buttons, and independent volume sliders
 - Refresh Sound Folders button
 - Optional Nuke screen flash
+- Uses Minecraft 26.2's current HUD rendering and input APIs
 - Persistent settings and Restore Defaults
 
 ## Controls
