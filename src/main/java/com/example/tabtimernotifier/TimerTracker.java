@@ -115,7 +115,7 @@ public final class TimerTracker {
             if (client.player == null) return;
             if ("Nuke".equals(name)) NukeFlash.trigger();
             IndependentAudio.play(name);
-            client.player.displayClientMessage(Component.literal(name + " is ready!"), true);
+            client.gui.hud.setOverlayMessage(Component.literal(name + " is ready!"), true);
         }
     }
 }
