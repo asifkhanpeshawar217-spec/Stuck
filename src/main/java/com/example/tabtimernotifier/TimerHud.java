@@ -1,8 +1,8 @@
 package com.example.tabtimernotifier;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
 public final class TimerHud {
     private static boolean editMode;
@@ -28,13 +28,11 @@ public final class TimerHud {
         }
     }
 
-    public static boolean isEditMode() {
-        return editMode;
-    }
+    public static boolean isEditMode() { return editMode; }
 
-    public static void render(DrawContext context) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (!NotifierSettings.hudEnabled || client.player == null || client.world == null) return;
+    public static void render(GuiGraphicsExtractor graphics) {
+        Minecraft client = Minecraft.getInstance();
+        if (!NotifierSettings.hudEnabled || client.player == null || client.level == null) return;
 
         boolean showNuke = NotifierSettings.hudShowNuke
                 && (TimerTracker.hasNukeData() || editMode);
@@ -45,14 +43,18 @@ public final class TimerHud {
         int count = (showNuke ? 1 : 0) + (showClone ? 1 : 0);
         float baseScale = NotifierSettings.hudTextSize;
         int contentWidth = 0;
-        if (showNuke) contentWidth = Math.max(contentWidth,
-                Math.max(client.textRenderer.getWidth("NUKE"),
-                        client.textRenderer.getWidth(timerText(TimerTracker.isNukeActive(),
-                                TimerTracker.getNukeRemainingSeconds()))));
-        if (showClone) contentWidth = Math.max(contentWidth,
-                Math.max(client.textRenderer.getWidth("CLONE"),
-                        client.textRenderer.getWidth(timerText(TimerTracker.isCloneActive(),
-                                TimerTracker.getCloneRemainingSeconds()))));
+        if (showNuke) {
+            contentWidth = Math.max(contentWidth, Math.max(
+                    client.font.width("NUKE"),
+                    client.font.width(timerText(TimerTracker.isNukeActive(),
+                            TimerTracker.getNukeRemainingSeconds()))));
+        }
+        if (showClone) {
+            contentWidth = Math.max(contentWidth, Math.max(
+                    client.font.width("CLONE"),
+                    client.font.width(timerText(TimerTracker.isCloneActive(),
+                            TimerTracker.getCloneRemainingSeconds()))));
+        }
 
         int autoWidth = (int) Math.ceil(contentWidth * baseScale) + PAD * 2;
         int gap = Math.max(0, NotifierSettings.hudSpacing);
@@ -74,23 +76,23 @@ public final class TimerHud {
         int x = NotifierSettings.hudX;
         int y = NotifierSettings.hudY;
         int alpha = clamp(Math.round(NotifierSettings.hudOpacity * 255), 0, 255);
-        context.fill(x, y, x + width, y + height, (alpha << 24) | 0x00101018);
+        graphics.fill(x, y, x + width, y + height, (alpha << 24) | 0x00101018);
 
         if (editMode) {
-            drawBorder(context, x, y, width, height);
-            context.fill(x + width - 9, y + height - 9, x + width, y + height, 0xFFFFFFFF);
+            drawBorder(graphics, x, y, width, height);
+            graphics.fill(x + width - 9, y + height - 9, x + width, y + height, 0xFFFFFFFF);
         }
 
         int textX = x + PAD;
         int textY = y + PAD;
         if (showNuke) {
-            drawTimer(context, client, "NUKE", NUKE_COLOR,
+            drawTimer(graphics, client, "NUKE", NUKE_COLOR,
                     TimerTracker.isNukeActive(), TimerTracker.getNukeRemainingSeconds(),
                     textX, textY, textScale);
             textY += Math.round(LINE_HEIGHT * textScale) + gap;
         }
         if (showClone) {
-            drawTimer(context, client, "CLONE", CLONE_COLOR,
+            drawTimer(graphics, client, "CLONE", CLONE_COLOR,
                     TimerTracker.isCloneActive(), TimerTracker.getCloneRemainingSeconds(),
                     textX, textY, textScale);
         }
@@ -100,24 +102,22 @@ public final class TimerHud {
         return active ? formatTime(seconds) : "READY";
     }
 
-    private static void drawBorder(DrawContext context, int x, int y, int width, int height) {
-        int color = 0xFFFFFFFF;
-        context.fill(x, y, x + width, y + 1, color);
-        context.fill(x, y + height - 1, x + width, y + height, color);
-        context.fill(x, y, x + 1, y + height, color);
-        context.fill(x + width - 1, y, x + width, y + height, color);
+    private static void drawBorder(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+        graphics.fill(x, y, x + width, y + 1, 0xFFFFFFFF);
+        graphics.fill(x, y + height - 1, x + width, y + height, 0xFFFFFFFF);
+        graphics.fill(x, y, x + 1, y + height, 0xFFFFFFFF);
+        graphics.fill(x + width - 1, y, x + width, y + height, 0xFFFFFFFF);
     }
 
-    private static void drawTimer(DrawContext context, MinecraftClient client,
+    private static void drawTimer(GuiGraphicsExtractor graphics, Minecraft client,
                                   String name, int color, boolean active, long seconds,
                                   int x, int y, float scale) {
-        context.getMatrices().pushMatrix();
-        context.getMatrices().translate((float) x, (float) y);
-        context.getMatrices().scale(scale, scale);
-        context.drawTextWithShadow(client.textRenderer, Text.literal(name), 0, 0, color);
-        context.drawTextWithShadow(client.textRenderer,
-                Text.literal(timerText(active, seconds)), 0, 12, TIMER_COLOR);
-        context.getMatrices().popMatrix();
+        graphics.pose().pushMatrix();
+        graphics.pose().translate((float) x, (float) y);
+        graphics.pose().scale(scale, scale);
+        graphics.text(client.font, Component.literal(name), 0, 0, color);
+        graphics.text(client.font, Component.literal(timerText(active, seconds)), 0, 12, TIMER_COLOR);
+        graphics.pose().popMatrix();
     }
 
     public static boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -184,18 +184,16 @@ public final class TimerHud {
     }
 
     private static int autoWidth() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         int width = 0;
         if (isNukeVisibleForLayout()) {
-            width = Math.max(width, Math.max(
-                    client.textRenderer.getWidth("NUKE"),
-                    client.textRenderer.getWidth(timerText(TimerTracker.isNukeActive(),
+            width = Math.max(width, Math.max(client.font.width("NUKE"),
+                    client.font.width(timerText(TimerTracker.isNukeActive(),
                             TimerTracker.getNukeRemainingSeconds()))));
         }
         if (isCloneVisibleForLayout()) {
-            width = Math.max(width, Math.max(
-                    client.textRenderer.getWidth("CLONE"),
-                    client.textRenderer.getWidth(timerText(TimerTracker.isCloneActive(),
+            width = Math.max(width, Math.max(client.font.width("CLONE"),
+                    client.font.width(timerText(TimerTracker.isCloneActive(),
                             TimerTracker.getCloneRemainingSeconds()))));
         }
         return (int) Math.ceil(width * NotifierSettings.hudTextSize) + PAD * 2;
@@ -210,13 +208,11 @@ public final class TimerHud {
     }
 
     private static boolean isNukeVisibleForLayout() {
-        return NotifierSettings.hudShowNuke
-                && (editMode || TimerTracker.hasNukeData());
+        return NotifierSettings.hudShowNuke && (editMode || TimerTracker.hasNukeData());
     }
 
     private static boolean isCloneVisibleForLayout() {
-        return NotifierSettings.hudShowClone
-                && (editMode || TimerTracker.hasCloneData());
+        return NotifierSettings.hudShowClone && (editMode || TimerTracker.hasCloneData());
     }
 
     private static int clamp(int value, int min, int max) {
