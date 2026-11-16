@@ -1,10 +1,10 @@
 package com.example.tabtimernotifier;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,7 +31,7 @@ public final class SoundSettingsScreen extends Screen {
     private static final int ACCENT = 0xFF8C9EFF;
 
     public SoundSettingsScreen(Screen parent) {
-        super(Text.literal("Nuke Alert Settings"));
+        super(Component.literal("Nuke Alert Settings"));
         this.parent = parent;
     }
 
@@ -44,63 +44,60 @@ public final class SoundSettingsScreen extends Screen {
         int left = (width - cardWidth) / 2;
         int top = Math.max(34, (height - 416) / 2);
 
-        addDrawableChild(ButtonWidget.builder(
-                Text.literal(NotifierSettings.lightTheme ? "Light theme" : "Dark theme"),
+        addRenderableWidget(Button.builder(
+                Component.literal(NotifierSettings.lightTheme ? "Light theme" : "Dark theme"),
                 button -> {
                     NotifierSettings.lightTheme = !NotifierSettings.lightTheme;
                     NotifierSettings.save();
-                    clearAndInit();
+                    rebuildWidgets();
                 }
-        ).dimensions(left + cardWidth - 112, top - 28, 112, 20).build());
+        ).bounds(left + cardWidth - 112, top - 28, 112, 20).build());
 
         addSection("NUKE", "nuke", left, top, cardWidth);
         addSection("CLONE", "clone", left, top + 105, cardWidth);
         addSection("ACCUMULATE", "accumulate", left, top + 210, cardWidth);
 
-        addDrawableChild(ButtonWidget.builder(flashButtonText(), button -> {
+        addRenderableWidget(Button.builder(flashButtonText(), button -> {
             NotifierSettings.nukeFlashEnabled = !NotifierSettings.nukeFlashEnabled;
             NotifierSettings.save();
-            clearAndInit();
-        }).dimensions(left, top + 318, cardWidth, 20).build());
+            rebuildWidgets();
+        }).bounds(left, top + 318, cardWidth, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Refresh sound folders"), button -> {
+        addRenderableWidget(Button.builder(Component.literal("Refresh sound folders"), button -> {
             refreshLists();
-            clearAndInit();
-        }).dimensions(left, top + 344, cardWidth, 20).build());
+            rebuildWidgets();
+        }).bounds(left, top + 344, cardWidth, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Restore defaults"), button -> {
+        addRenderableWidget(Button.builder(Component.literal("Restore defaults"), button -> {
             NotifierSettings.restoreAll();
-            clearAndInit();
-        }).dimensions(left, top + 370, cardWidth / 2 - 4, 20).build());
+            rebuildWidgets();
+        }).bounds(left, top + 370, cardWidth / 2 - 4, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Done"), button -> close())
-                .dimensions(left + cardWidth / 2 + 4, top + 370,
-                        cardWidth / 2 - 4, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
+                .bounds(left + cardWidth / 2 + 4, top + 370, cardWidth / 2 - 4, 20).build());
     }
 
-    private Text flashButtonText() {
-        return Text.literal("Nuke screen flash  ·  "
+    private Component flashButtonText() {
+        return Component.literal("Nuke screen flash  ·  "
                 + (NotifierSettings.nukeFlashEnabled ? "ON" : "OFF"));
     }
 
     private void addSection(String title, String timer, int x, int y, int w) {
-        addDrawableChild(ButtonWidget.builder(Text.literal("‹"), button -> {
+        addRenderableWidget(Button.builder(Component.literal("‹"), button -> {
             cycle(timer, -1);
-            clearAndInit();
-        }).dimensions(x, y + 42, 28, 20).build());
+            rebuildWidgets();
+        }).bounds(x, y + 42, 28, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("›"), button -> {
+        addRenderableWidget(Button.builder(Component.literal("›"), button -> {
             cycle(timer, 1);
-            clearAndInit();
-        }).dimensions(x + 34, y + 42, 28, 20).build());
+            rebuildWidgets();
+        }).bounds(x + 34, y + 42, 28, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Preview"),
+        addRenderableWidget(Button.builder(Component.literal("Preview"),
                 button -> IndependentAudio.preview(timer))
-                .dimensions(x + w - 88, y + 42, 88, 20).build());
+                .bounds(x + w - 88, y + 42, 88, 20).build());
 
-        addDrawableChild(new VolumeSlider(
-                x, y + 70, w, 20, getVolume(timer), timer
-        ));
+        addRenderableWidget(new VolumeSlider(x, y + 70, w, 20, getVolume(timer), timer));
     }
 
     private void cycle(String timer, int direction) {
@@ -200,7 +197,7 @@ public final class SoundSettingsScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         boolean light = NotifierSettings.lightTheme;
         int bg = light ? LIGHT_BG : DARK_BG;
         int card = light ? LIGHT_CARD : DARK_CARD;
@@ -210,57 +207,53 @@ public final class SoundSettingsScreen extends Screen {
         int left = (width - cardWidth) / 2;
         int top = Math.max(34, (height - 416) / 2);
 
-        context.fill(0, 0, width, height, bg);
-        Text heading = Text.literal("NUKE ALERT");
-        context.drawText(textRenderer, heading,
-                width / 2 - textRenderer.getWidth(heading) / 2,
-                top - 25, main, false);
-        Text subtitle = Text.literal("COOLDOWN NOTIFICATIONS");
-        context.drawText(textRenderer, subtitle,
-                width / 2 - textRenderer.getWidth(subtitle) / 2,
-                top - 12, muted, false);
+        graphics.fill(0, 0, width, height, bg);
+        Component heading = Component.literal("NUKE ALERT");
+        graphics.centeredText(font, heading, width / 2, top - 25, main);
+        Component subtitle = Component.literal("COOLDOWN NOTIFICATIONS");
+        graphics.centeredText(font, subtitle, width / 2, top - 12, muted);
 
-        drawCard(context, left, top, cardWidth, "NUKE", "nuke", card, main, muted);
-        drawCard(context, left, top + 105, cardWidth, "CLONE", "clone", card, main, muted);
-        drawCard(context, left, top + 210, cardWidth, "ACCUMULATE", "accumulate",
+        drawCard(graphics, left, top, cardWidth, "NUKE", "nuke", card, main, muted);
+        drawCard(graphics, left, top + 105, cardWidth, "CLONE", "clone", card, main, muted);
+        drawCard(graphics, left, top + 210, cardWidth, "ACCUMULATE", "accumulate",
                 card, main, muted);
 
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }
 
-    private void drawCard(DrawContext context, int x, int y, int w,
+    private void drawCard(GuiGraphicsExtractor graphics, int x, int y, int w,
                           String title, String timer, int card, int main, int muted) {
-        context.fill(x - 8, y, x + w + 8, y + 98, card);
-        context.fill(x - 8, y, x + w + 8, y + 2, ACCENT);
-        context.drawText(textRenderer, title, x, y + 10, main, false);
+        graphics.fill(x - 8, y, x + w + 8, y + 98, card);
+        graphics.fill(x - 8, y, x + w + 8, y + 2, ACCENT);
+        graphics.text(font, Component.literal(title), x, y + 10, main);
 
         String selected = getSelected(timer);
         String shown = selected.isBlank() ? "Built-in tone" : selected;
-        context.drawText(textRenderer, "SOUND", x, y + 29, muted, false);
-        context.drawText(textRenderer, shown, x + 48, y + 29, main, false);
+        graphics.text(font, Component.literal("SOUND"), x, y + 29, muted);
+        graphics.text(font, Component.literal(shown), x + 48, y + 29, main);
 
         List<String> sounds = listFor(timer);
         String count = sounds.size() + (sounds.size() == 1 ? " file available" : " files available");
-        context.drawText(textRenderer, count, x, y + 50, muted, false);
+        graphics.text(font, Component.literal(count), x, y + 50, muted);
     }
 
     @Override
-    public void close() {
-        if (client != null) client.setScreen(parent);
+    public void onClose() {
+        if (minecraft != null) minecraft.gui.setScreen(parent);
     }
 
-    private final class VolumeSlider extends SliderWidget {
+    private final class VolumeSlider extends AbstractSliderButton {
         private final String timer;
 
         VolumeSlider(int x, int y, int width, int height, double value, String timer) {
-            super(x, y, width, height, Text.literal("Volume"), value);
+            super(x, y, width, height, Component.literal("Volume"), value);
             this.timer = timer;
             updateMessage();
         }
 
         @Override
         protected void updateMessage() {
-            setMessage(Text.literal("Volume: " + Math.round(value * 100) + "%"));
+            setMessage(Component.literal("Volume: " + Math.round(value * 100) + "%"));
         }
 
         @Override
