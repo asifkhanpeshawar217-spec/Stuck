@@ -22,9 +22,16 @@ It reads the server's player-list (Tab) footer even when the Tab screen is close
 
 The operating system's output device and per-application volume controls can still affect the Java process.
 
-## Open the settings screen
+## HUD and settings controls
 
-Press **Right Shift + N** while no other screen is open.
+- Press **Right Shift** in-game to open the HUD editor.
+- Drag the HUD to move it.
+- Drag the bottom-right handle to set a custom width and height.
+- The HUD automatically fits its text until you manually resize it.
+- The HUD displays Nuke and Clone names with countdowns only; it has no progress bars.
+- Press **Right Shift** again to finish editing.
+- Press **Right Shift + N** while no other screen is open to open settings.
+- Switch between dark and light settings themes in the settings screen.
 
 ## Add your own sounds
 
