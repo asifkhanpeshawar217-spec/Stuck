@@ -1,8 +1,7 @@
-
 package com.example.tabtimernotifier;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -10,21 +9,11 @@ import java.util.regex.Pattern;
 
 /** Reads server-sent player-list footer text and tracks cooldowns locally. */
 public final class TimerTracker {
-
-    private static final Pattern NUKE_LINE =
-            Pattern.compile("(?i)\\bNuke\\s*:\\s*(.*)");
-
-    private static final Pattern CLONE_LINE =
-            Pattern.compile("(?i)\\bClone\\s*:\\s*(.*)");
-
-    private static final Pattern ACCUMULATE_LINE =
-            Pattern.compile("(?i)\\bAccumulate\\s*:\\s*(.*)");
-
-    private static final Pattern TIME =
-            Pattern.compile("(?i)(\\d+)\\s*m\\s*(\\d+)\\s*s");
-
-    private static final Pattern READY =
-            Pattern.compile("(?i)\\bready\\s*!?");
+    private static final Pattern NUKE_LINE = Pattern.compile("(?i)\\bNuke\\s*:\\s*(.*)");
+    private static final Pattern CLONE_LINE = Pattern.compile("(?i)\\bClone\\s*:\\s*(.*)");
+    private static final Pattern ACCUMULATE_LINE = Pattern.compile("(?i)\\bAccumulate\\s*:\\s*(.*)");
+    private static final Pattern TIME = Pattern.compile("(?i)(\\d+)\\s*m\\s*(\\d+)\\s*s");
+    private static final Pattern READY = Pattern.compile("(?i)\\bready\\s*!?");
 
     private static final Cooldown NUKE = new Cooldown("Nuke");
     private static final Cooldown CLONE = new Cooldown("Clone");
@@ -34,126 +23,67 @@ public final class TimerTracker {
 
     public static void onFooterReceived(String footer) {
         if (footer == null || footer.isBlank()) return;
-
-        String normalized = footer.replace('\r', '\n');
-
+        String normalized = footer.replace('\\r', '\\n');
         updateFromLine(normalized, NUKE_LINE, NUKE);
         updateFromLine(normalized, CLONE_LINE, CLONE);
         updateFromLine(normalized, ACCUMULATE_LINE, ACCUMULATE);
     }
 
-    private static void updateFromLine(
-            String footer,
-            Pattern linePattern,
-            Cooldown cooldown
-    ) {
+    private static void updateFromLine(String footer, Pattern linePattern, Cooldown cooldown) {
         Matcher lineMatcher = linePattern.matcher(footer);
-
         if (!lineMatcher.find()) return;
 
-        String value = lineMatcher.group(1)
-                .trim()
-                .toLowerCase(Locale.ROOT);
-
+        String value = lineMatcher.group(1).trim().toLowerCase(Locale.ROOT);
         Matcher timeMatcher = TIME.matcher(value);
-
         if (timeMatcher.find()) {
-            long seconds =
-                    Long.parseLong(timeMatcher.group(1)) * 60L
+            long seconds = Long.parseLong(timeMatcher.group(1)) * 60L
                     + Long.parseLong(timeMatcher.group(2));
-
             cooldown.updateTimer(seconds);
-
         } else if (READY.matcher(value).find()) {
             cooldown.updateReady();
         }
     }
 
-    public static void onClientTick(MinecraftClient client) {
-        if (client.player == null || client.world == null) return;
-
+    public static void onClientTick(Minecraft client) {
+        if (client.player == null || client.level == null) return;
         long now = System.nanoTime();
-
         NUKE.tick(now, client);
         CLONE.tick(now, client);
         ACCUMULATE.tick(now, client);
     }
 
-    // ==========================================
-    // HUD ACCESS METHODS
-    // ==========================================
-
-    public static boolean hasNukeData() {
-        return NUKE.isInitialized();
-    }
-
-    public static boolean hasCloneData() {
-        return CLONE.isInitialized();
-    }
-
-    public static boolean isNukeActive() {
-        return NUKE.isActive();
-    }
-
-    public static boolean isCloneActive() {
-        return CLONE.isActive();
-    }
-
-    public static long getNukeRemainingSeconds() {
-        return NUKE.getRemainingSeconds();
-    }
-
-    public static long getCloneRemainingSeconds() {
-        return CLONE.getRemainingSeconds();
-    }
-
-    // ==========================================
-    // COOLDOWN SYSTEM
-    // ==========================================
+    public static boolean hasNukeData() { return NUKE.isInitialized(); }
+    public static boolean hasCloneData() { return CLONE.isInitialized(); }
+    public static boolean isNukeActive() { return NUKE.isActive(); }
+    public static boolean isCloneActive() { return CLONE.isActive(); }
+    public static long getNukeRemainingSeconds() { return NUKE.getRemainingSeconds(); }
+    public static long getCloneRemainingSeconds() { return CLONE.getRemainingSeconds(); }
 
     private static final class Cooldown {
-
         private final String name;
-
         private boolean initialized;
         private boolean active;
         private boolean notified;
-
         private long readyAtNanos;
 
-        private Cooldown(String name) {
-            this.name = name;
-        }
-
-        private boolean isInitialized() {
-            return initialized;
-        }
-
-        private boolean isActive() {
-            return active;
-        }
+        private Cooldown(String name) { this.name = name; }
+        private boolean isInitialized() { return initialized; }
+        private boolean isActive() { return active; }
 
         private long getRemainingSeconds() {
             if (!active) return 0L;
-
             long remaining = readyAtNanos - System.nanoTime();
-
             if (remaining <= 0L) return 0L;
-
             return (remaining + 999_999_999L) / 1_000_000_000L;
         }
 
         private void updateTimer(long seconds) {
             long now = System.nanoTime();
-
             if (seconds > 0) {
-                readyAtNanos =
-                        now + seconds * 1_000_000_000L;
-
+                readyAtNanos = now + seconds * 1_000_000_000L;
                 active = true;
                 notified = false;
                 initialized = true;
-
             } else {
                 updateReady();
             }
@@ -166,40 +96,26 @@ public final class TimerTracker {
                 notified = true;
                 return;
             }
-
             if (active && !notified) {
-                playNotification(MinecraftClient.getInstance());
+                playNotification(Minecraft.getInstance());
                 notified = true;
             }
-
             active = false;
         }
 
-        private void tick(long now, MinecraftClient client) {
+        private void tick(long now, Minecraft client) {
             if (active && !notified && now >= readyAtNanos) {
                 playNotification(client);
-
                 notified = true;
                 active = false;
             }
         }
 
-        private void playNotification(MinecraftClient client) {
-            if (client.player != null) {
-
-                // Only Nuke triggers the screen flash.
-                if ("Nuke".equals(name)) {
-                    NukeFlash.trigger();
-                }
-
-                // Existing sound notification.
-                IndependentAudio.play(name);
-
-                client.player.sendMessage(
-                        Text.literal(name + " is ready!"),
-                        true
-                );
-            }
+        private void playNotification(Minecraft client) {
+            if (client.player == null) return;
+            if ("Nuke".equals(name)) NukeFlash.trigger();
+            IndependentAudio.play(name);
+            client.player.displayClientMessage(Component.literal(name + " is ready!"), true);
         }
     }
 }
