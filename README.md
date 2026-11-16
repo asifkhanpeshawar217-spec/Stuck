@@ -1,8 +1,8 @@
-# Nuke Alert
+# Nuke Alert — Minecraft 26.2
 
-A client-side Fabric mod for Minecraft Java **1.21.11**.
+A client-side Fabric mod for Minecraft Java **26.2**.
 
-It reads the server's player-list (Tab) footer even when the Tab screen is closed, tracks these cooldowns locally, and plays a notification when one becomes ready:
+It reads the server's player-list footer, tracks cooldowns locally, and plays notifications when timers become ready:
 
 - Nuke
 - Clone
@@ -10,57 +10,43 @@ It reads the server's player-list (Tab) footer even when the Tab screen is close
 
 ## Features
 
+- Nuke and Clone countdown HUD, visible without holding Tab
+- Text-only HUD with no progress bars
+- Automatic background sizing with small padding
+- Right Shift HUD editor: drag to move and resize from the bottom-right corner
+- Saved HUD position and custom dimensions
+- Premium Minimal settings screen with dark and light themes
 - Separate custom sounds for Nuke, Clone, and Accumulate
 - MP3, WAV, AIFF, and AIF audio files
-- In-game sound selector with previous/next selection
-- Preview button for each timer
-- Independent volume slider for each timer
+- In-game sound selector, preview buttons, and independent volume sliders
 - Refresh Sound Folders button
-- Settings are saved and retained after restarting Minecraft
-- Restore Defaults button (only changes settings when clicked)
-- Separate desktop audio output, independent of Minecraft's in-game sound sliders
+- Optional Nuke screen flash
+- Persistent settings and Restore Defaults
 
-The operating system's output device and per-application volume controls can still affect the Java process.
+## Controls
 
-## HUD and settings controls
+- **Right Shift** — open the HUD editor
+- **Drag the HUD** — move it
+- **Drag the bottom-right handle** — resize it
+- **Right Shift** — finish editing
+- **Right Shift + N** — open settings when no other screen is open
 
-- Press **Right Shift** in-game to open the HUD editor.
-- Drag the HUD to move it.
-- Drag the bottom-right handle to set a custom width and height.
-- The HUD automatically fits its text until you manually resize it.
-- The HUD displays Nuke and Clone names with countdowns only; it has no progress bars.
-- Press **Right Shift** again to finish editing.
-- Press **Right Shift + N** while no other screen is open to open settings.
-- Switch between dark and light settings themes in the settings screen.
+## Custom sounds
 
-## Add your own sounds
-
-Run the mod once. It creates these folders inside your Minecraft instance's `config` folder:
+Run the mod once. It creates these folders inside your Minecraft instance's `config/tab-timer-notifier/sounds` directory:
 
 ```text
-.minecraft/
-└── config/
-    └── nuke-alert/
-        ├── settings.json
-        └── sounds/
-            ├── nuke/
-            ├── clone/
-            └── accumulate/
+sounds/
+├── nuke/
+├── clone/
+└── accumulate/
 ```
 
-Put your audio files in the matching folder. For example:
-
-- `sounds/nuke/alert.mp3`
-- `sounds/clone/clone-ready.mp3`
-- `sounds/accumulate/finished.wav`
-
-Open the settings screen and press **Refresh Sound Folders**. Use the left and right arrow buttons in each section to select a sound, then press **Preview** to test it.
-
-If no custom file is selected, the mod plays its built-in tone.
+Place audio files in the matching folder, open settings, and press **Refresh sound folders**. Use the arrow buttons to select a sound and **Preview** to test it. If no custom file is selected, the built-in tone is used.
 
 ## Timer format
 
-The footer parser recognizes these examples:
+The footer parser recognizes examples such as:
 
 ```text
 Nuke: 11m 59s
@@ -70,24 +56,17 @@ Accumulate: Ready!
 
 It also recognizes `Ready!` for Nuke and Clone.
 
-**Important:** the server must send player-list footer updates to your client. The mod can estimate a countdown from the last received timer, but it cannot know about server-side timer changes that the server never sends.
-
-## Build using GitHub Actions
-
-1. Create a new, empty GitHub repository.
-2. Extract this ZIP file.
-3. Upload the **contents inside** the `NukeAlert-Fresh` folder to the root of your new repository. Do not upload the ZIP itself.
-4. Make sure `.github/workflows/build.yml` is included. GitHub may hide `.github` in some file pickers; create that folder manually if necessary.
-5. Open the **Actions** tab in your repository.
-6. Select **Build Fabric mod** and run the workflow, or push a commit to the `main` branch.
-7. When the workflow succeeds, open the run and download the `nuke-alert` artifact.
-8. Inside the downloaded artifact, use `nuke-alert-1.0.0.jar` in your Minecraft `mods` folder.
+The server must send player-list footer updates to your client. The mod estimates a countdown from the last received timer, but cannot know about server-side changes that the server never sends.
 
 ## Requirements
 
-- Minecraft Java 1.21.11
+- Minecraft Java 26.2
 - Fabric Loader 0.20.1 or newer
-- Fabric API for Minecraft 1.21.11
-- Java 21
+- Fabric API for Minecraft 26.2
+- Java 25 or newer
 
-This project is configured to build with Gradle 9.2.0 through GitHub Actions.
+## Build
+
+The GitHub Actions workflow builds the mod automatically for this branch. Open the **Actions** tab, select the latest successful run, and download the `nuke-alert-minecraft-26.2` artifact. Place the JAR in your Minecraft `mods` folder.
+
+The 1.21.11 version remains separate and unchanged on its own development branch.
