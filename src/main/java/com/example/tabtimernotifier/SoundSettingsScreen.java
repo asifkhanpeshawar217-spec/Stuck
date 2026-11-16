@@ -242,7 +242,6 @@ public final class SoundSettingsScreen extends Screen {
         List<String> sounds = listFor(timer);
         String count = sounds.size() + (sounds.size() == 1 ? " file available" : " files available");
         context.drawText(textRenderer, count, x, y + 50, muted, false);
-        context.drawText(textRenderer, "VOLUME", x, y + 76, muted, false);
     }
 
     @Override
