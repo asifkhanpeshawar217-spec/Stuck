@@ -47,6 +47,7 @@ public final class NotifierSettings {
     // HUD dimensions
     public static int hudWidth = 130;
     public static int hudHeight = 100;
+    public static boolean hudCustomSize = false;
 
     // HUD appearance
     public static float hudTextSize = 1.0f;
@@ -120,8 +121,9 @@ public final class NotifierSettings {
             );
 
             hudHeight = clampInt(
-                    intValue(json, "hudHeight", 100), 55, 400
+                    intValue(json, "hudHeight", 100), 40, 400
             );
+            hudCustomSize = booleanValue(json, "hudCustomSize", false);
 
             // HUD appearance
             hudTextSize = clampRange(
@@ -177,6 +179,7 @@ public final class NotifierSettings {
         // HUD dimensions
         json.addProperty("hudWidth", hudWidth);
         json.addProperty("hudHeight", hudHeight);
+        json.addProperty("hudCustomSize", hudCustomSize);
 
         // HUD appearance
         json.addProperty("hudTextSize", hudTextSize);
@@ -333,6 +336,7 @@ public final class NotifierSettings {
 
         hudWidth = 130;
         hudHeight = 100;
+        hudCustomSize = false;
 
         hudTextSize = 1.0f;
         hudOpacity = 0.75f;
