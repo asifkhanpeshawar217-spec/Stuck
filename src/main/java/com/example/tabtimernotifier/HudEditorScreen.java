@@ -1,19 +1,17 @@
-
 package com.example.tabtimernotifier;
 
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 public final class HudEditorScreen extends Screen {
-
     private final Screen parent;
 
     public HudEditorScreen(Screen parent) {
-        super(Text.literal("Nuke Alert HUD Editor"));
+        super(Component.literal("Nuke Alert HUD Editor"));
         this.parent = parent;
     }
 
@@ -23,122 +21,62 @@ public final class HudEditorScreen extends Screen {
     }
 
     @Override
-    public void render(
-            DrawContext context,
-            int mouseX,
-            int mouseY,
-            float delta
-    ) {
-        TimerHud.render(context);
-
-        context.drawTextWithShadow(
-                textRenderer,
-                Text.literal("HUD EDITOR"),
-                10,
-                10,
-                0xFFFFFFFF
-        );
-
-        context.drawTextWithShadow(
-                textRenderer,
-                Text.literal("Drag to move | Bottom-right corner to resize"),
-                10,
-                22,
-                0xFFCCCCCC
-        );
-
-        context.drawTextWithShadow(
-                textRenderer,
-                Text.literal("Right Shift: Finish editing"),
-                10,
-                34,
-                0xFFCCCCCC
-        );
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+        TimerHud.render(graphics);
+        graphics.text(font, Component.literal("HUD EDITOR"), 10, 10, 0xFFFFFFFF);
+        graphics.text(font, Component.literal("Drag to move | Bottom-right corner to resize"),
+                10, 22, 0xFFCCCCCC);
+        graphics.text(font, Component.literal("Right Shift: Finish editing"), 10, 34, 0xFFCCCCCC);
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubleClick) {
-        if (TimerHud.mouseClicked(
-                click.x(),
-                click.y(),
-                click.button()
-        )) {
-            return true;
-        }
-
-        return super.mouseClicked(click, doubleClick);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (TimerHud.mouseClicked(event.x(), event.y(), event.button())) return true;
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseDragged(
-            Click click,
-            double deltaX,
-            double deltaY
-    ) {
-        if (TimerHud.mouseDragged(
-                click.x(),
-                click.y(),
-                click.button(),
-                deltaX,
-                deltaY
-        )) {
-            return true;
-        }
-
-        return super.mouseDragged(click, deltaX, deltaY);
+    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        if (TimerHud.mouseDragged(event.x(), event.y(), event.button(), deltaX, deltaY)) return true;
+        return super.mouseDragged(event, deltaX, deltaY);
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
-        if (TimerHud.mouseReleased(
-                click.x(),
-                click.y(),
-                click.button()
-        )) {
-            return true;
-        }
-
-        return super.mouseReleased(click);
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (TimerHud.mouseReleased(event.x(), event.y(), event.button())) return true;
+        return super.mouseReleased(event);
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
-        int keyCode = input.key();
-
-        if (keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT) {
+    public boolean keyPressed(KeyEvent event) {
+        if (event.key() == GLFW.GLFW_KEY_RIGHT_SHIFT) {
             finishEditing();
             return true;
         }
 
-        if (keyCode == GLFW.GLFW_KEY_N
-                && (input.modifiers() & GLFW.GLFW_MOD_SHIFT) != 0) {
-
-            if (client != null) {
-                client.setScreen(new SoundSettingsScreen(this));
-            }
-
+        if (event.key() == GLFW.GLFW_KEY_N
+                && (event.modifiers() & GLFW.GLFW_MOD_SHIFT) != 0) {
+            if (minecraft != null) minecraft.gui.setScreen(new SoundSettingsScreen(this));
             return true;
         }
 
-        return super.keyPressed(input);
+        return super.keyPressed(event);
     }
 
     private void finishEditing() {
         TimerHud.setEditMode(false);
         NotifierSettings.save();
-
-        if (client != null) {
-            client.setScreen(parent);
-        }
+        if (minecraft != null) minecraft.gui.setScreen(parent);
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         finishEditing();
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false;
     }
 }

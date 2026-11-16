@@ -1,11 +1,9 @@
-
 {
   "required": true,
   "package": "com.example.tabtimernotifier.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "client": [
-    "PlayerListHeaderPacketMixin",
-    "InGameHudFlashMixin"
+    "PlayerListHeaderPacketMixin"
   ],
   "injectors": {
     "defaultRequire": 1
