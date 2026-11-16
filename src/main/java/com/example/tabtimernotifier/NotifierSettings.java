@@ -34,6 +34,7 @@ public final class NotifierSettings {
 
     // Nuke flash
     public static boolean nukeFlashEnabled = true;
+    public static boolean lightTheme = false;
 
     // HUD visibility
     public static boolean hudEnabled = true;
@@ -97,6 +98,7 @@ public final class NotifierSettings {
             nukeFlashEnabled = booleanValue(
                     json, "nukeFlashEnabled", true
             );
+            lightTheme = booleanValue(json, "lightTheme", false);
 
             // HUD visibility
             hudEnabled = booleanValue(
@@ -166,6 +168,7 @@ public final class NotifierSettings {
                 "nukeFlashEnabled",
                 nukeFlashEnabled
         );
+        json.addProperty("lightTheme", lightTheme);
 
         // HUD visibility
         json.addProperty("hudEnabled", hudEnabled);
@@ -326,6 +329,7 @@ public final class NotifierSettings {
         accumulateVolume = 0.85f;
 
         nukeFlashEnabled = true;
+        lightTheme = false;
 
         hudEnabled = true;
         hudShowNuke = true;
