@@ -16,7 +16,6 @@ public final class TimerHud {
     private static final int CLONE_COLOR = 0xFFB69AFF;
     private static final int TIMER_COLOR = 0xFFFFFFFF;
     private static final int PAD = 6;
-    private static final int LABEL_TIMER_GAP = 2;
     private static final int LINE_HEIGHT = 25;
 
     private TimerHud() {}
@@ -57,7 +56,7 @@ public final class TimerHud {
 
         int autoWidth = (int) Math.ceil(contentWidth * baseScale) + PAD * 2;
         int gap = Math.max(0, NotifierSettings.hudSpacing);
-        int autoHeight = (int) Math.ceil((count * LINE_HEIGHT - (count > 1 ? 0 : 0)
+        int autoHeight = (int) Math.ceil((count * LINE_HEIGHT
                 + (count > 1 ? gap : 0)) * baseScale) + PAD * 2;
 
         int width = autoWidth;
@@ -185,17 +184,39 @@ public final class TimerHud {
     }
 
     private static int autoWidth() {
-        MinecraftClient c = MinecraftClient.getInstance();
-        int w = 0;
-        if (NotifierSettings.hudShowNuke) w = Math.max(w, Math.max(c.textRenderer.getWidth("NUKE"), c.textRenderer.getWidth("00:00")));
-        if (NotifierSettings.hudShowClone) w = Math.max(w, Math.max(c.textRenderer.getWidth("CLONE"), c.textRenderer.getWidth("00:00")));
-        return (int) Math.ceil(w * NotifierSettings.hudTextSize) + PAD * 2;
+        MinecraftClient client = MinecraftClient.getInstance();
+        int width = 0;
+        if (isNukeVisibleForLayout()) {
+            width = Math.max(width, Math.max(
+                    client.textRenderer.getWidth("NUKE"),
+                    client.textRenderer.getWidth(timerText(TimerTracker.isNukeActive(),
+                            TimerTracker.getNukeRemainingSeconds()))));
+        }
+        if (isCloneVisibleForLayout()) {
+            width = Math.max(width, Math.max(
+                    client.textRenderer.getWidth("CLONE"),
+                    client.textRenderer.getWidth(timerText(TimerTracker.isCloneActive(),
+                            TimerTracker.getCloneRemainingSeconds()))));
+        }
+        return (int) Math.ceil(width * NotifierSettings.hudTextSize) + PAD * 2;
     }
 
     private static int autoHeight() {
-        int count = (NotifierSettings.hudShowNuke ? 1 : 0) + (NotifierSettings.hudShowClone ? 1 : 0);
+        int count = (isNukeVisibleForLayout() ? 1 : 0)
+                + (isCloneVisibleForLayout() ? 1 : 0);
         float scale = NotifierSettings.hudTextSize;
-        return (int) Math.ceil((count * LINE_HEIGHT + (count > 1 ? NotifierSettings.hudSpacing : 0)) * scale) + PAD * 2;
+        return (int) Math.ceil((count * LINE_HEIGHT
+                + (count > 1 ? NotifierSettings.hudSpacing : 0)) * scale) + PAD * 2;
+    }
+
+    private static boolean isNukeVisibleForLayout() {
+        return NotifierSettings.hudShowNuke
+                && (editMode || TimerTracker.hasNukeData());
+    }
+
+    private static boolean isCloneVisibleForLayout() {
+        return NotifierSettings.hudShowClone
+                && (editMode || TimerTracker.hasCloneData());
     }
 
     private static int clamp(int value, int min, int max) {
