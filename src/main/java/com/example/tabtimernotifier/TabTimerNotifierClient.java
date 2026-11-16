@@ -37,7 +37,7 @@ public final class TabTimerNotifierClient implements ClientModInitializer {
 
             while (openSettings.consumeClick()) {
                 boolean rightShiftDown = InputConstants.isKeyDown(
-                        client.getWindow().getWindow(),
+                        client.getWindow(),
                         GLFW.GLFW_KEY_RIGHT_SHIFT
                 );
                 if (rightShiftDown && client.gui.screen() == null) {
