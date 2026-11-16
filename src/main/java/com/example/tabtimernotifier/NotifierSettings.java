@@ -34,6 +34,7 @@ public final class NotifierSettings {
 
     // Nuke flash
     public static boolean nukeFlashEnabled = true;
+    public static boolean lightTheme = false;
 
     // HUD visibility
     public static boolean hudEnabled = true;
@@ -47,6 +48,7 @@ public final class NotifierSettings {
     // HUD dimensions
     public static int hudWidth = 130;
     public static int hudHeight = 100;
+    public static boolean hudCustomSize = false;
 
     // HUD appearance
     public static float hudTextSize = 1.0f;
@@ -96,6 +98,7 @@ public final class NotifierSettings {
             nukeFlashEnabled = booleanValue(
                     json, "nukeFlashEnabled", true
             );
+            lightTheme = booleanValue(json, "lightTheme", false);
 
             // HUD visibility
             hudEnabled = booleanValue(
@@ -120,8 +123,9 @@ public final class NotifierSettings {
             );
 
             hudHeight = clampInt(
-                    intValue(json, "hudHeight", 100), 55, 400
+                    intValue(json, "hudHeight", 100), 40, 400
             );
+            hudCustomSize = booleanValue(json, "hudCustomSize", false);
 
             // HUD appearance
             hudTextSize = clampRange(
@@ -164,6 +168,7 @@ public final class NotifierSettings {
                 "nukeFlashEnabled",
                 nukeFlashEnabled
         );
+        json.addProperty("lightTheme", lightTheme);
 
         // HUD visibility
         json.addProperty("hudEnabled", hudEnabled);
@@ -177,6 +182,7 @@ public final class NotifierSettings {
         // HUD dimensions
         json.addProperty("hudWidth", hudWidth);
         json.addProperty("hudHeight", hudHeight);
+        json.addProperty("hudCustomSize", hudCustomSize);
 
         // HUD appearance
         json.addProperty("hudTextSize", hudTextSize);
@@ -323,6 +329,7 @@ public final class NotifierSettings {
         accumulateVolume = 0.85f;
 
         nukeFlashEnabled = true;
+        lightTheme = false;
 
         hudEnabled = true;
         hudShowNuke = true;
@@ -333,6 +340,7 @@ public final class NotifierSettings {
 
         hudWidth = 130;
         hudHeight = 100;
+        hudCustomSize = false;
 
         hudTextSize = 1.0f;
         hudOpacity = 0.75f;
